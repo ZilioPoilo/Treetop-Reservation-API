@@ -13,6 +13,13 @@ namespace Reservation_API.Models
         Canceled = 4
     }
 
+    public enum PaymentType
+    {
+        Card = 1,
+
+        Cash = 2
+    }
+
     public class Reservation
     {
         [Required]
@@ -30,9 +37,19 @@ namespace Reservation_API.Models
         [Required]
         public DateTime Departure { get; set; }
 
+        [Required]
+        public string GuestId { get; set; } = null!;
+
+        [Required]
+        public int PaymentAmount { get; set; }
+
+        [Required]
+        public PaymentType PaymentType { get; set; }
+
         public Reservation()
         {
             Id = Guid.NewGuid().ToString();
+            Status = Status.AwaitingConfirmation;
         }
 
     }

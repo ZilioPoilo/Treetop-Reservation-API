@@ -2,6 +2,7 @@ using Microsoft.OpenApi.Models;
 using Reservation_API.AppMapping;
 using Reservation_API.Services;
 using Reservation_API.Services.DataServices;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,14 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Logger
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateBootstrapLogger();
+
+// Add logger
+builder.Host.UseSerilog();
 
 // AutoMappper
 builder.Services.AddAutoMapper(typeof(AppMappingService));

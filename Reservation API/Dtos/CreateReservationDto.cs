@@ -1,19 +1,12 @@
-﻿using Reservation_API.Models;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
 using System.ComponentModel.DataAnnotations;
+using Reservation_API.Models;
 
 namespace Reservation_API.Dtos
 {
-    public class ReservationDto
+    public class CreateReservationDto
     {
-        [Required]
-        public string Id { get; set; }
-
-        [Required]
-        public int Cabin { get; set; }
-
-        [Required]
-        public Status Status { get; set; }
-
         [Required]
         public DateTime Arrive { get; set; }
 
