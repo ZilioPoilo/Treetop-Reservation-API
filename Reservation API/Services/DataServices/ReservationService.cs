@@ -10,13 +10,14 @@ namespace Reservation_API.Services.DataServices
 
         public ReservationService(IConfiguration configuration, MongoDbConnectionService connectionService)
         {
-            string collection_name = configuration.GetSection("MongoDB:TableReservations").Get<string>();
+            string? collection_name = configuration.GetSection("MongoDB:TableReservations").Get<string>();
             _collection = connectionService.Database.GetCollection<Reservation>(collection_name);
         }
 
         public async Task<Reservation> CreateAsync(Reservation model)
         {
             await _collection.InsertOneAsync(model);
+
             return model;
         }
 

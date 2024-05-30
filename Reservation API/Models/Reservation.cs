@@ -4,6 +4,8 @@ namespace Reservation_API.Models
 {
     public enum Status
     {
+        Validating = 0,
+
         Completed = 1,
 
         Reserved = 2,
@@ -38,7 +40,7 @@ namespace Reservation_API.Models
         public DateTime Departure { get; set; }
 
         [Required]
-        public string GuestId { get; set; } = null!;
+        public string GuestNumber { get; set; } = null!;
 
         [Required]
         public int PaymentAmount { get; set; }
@@ -46,7 +48,9 @@ namespace Reservation_API.Models
         [Required]
         public PaymentType PaymentType { get; set; }
 
-        public Reservation()
+        public string? Promocode { get; set; }
+
+        public void UpdateReservation()
         {
             Id = Guid.NewGuid().ToString();
             Status = Status.AwaitingConfirmation;

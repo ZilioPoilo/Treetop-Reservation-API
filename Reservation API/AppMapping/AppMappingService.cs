@@ -9,7 +9,7 @@ namespace Reservation_API.AppMapping
         public AppMappingService()
         {
             CreateMap<Reservation, ReservationDto>().ReverseMap();
-            CreateMap<Reservation, CreateReservationDto>().ReverseMap();
+            CreateMap<ReservationDto, ValidateReservationDto>().ReverseMap();
         }
     }
 }

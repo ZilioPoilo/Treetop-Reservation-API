@@ -5,8 +5,7 @@ namespace Reservation_API.Dtos
 {
     public class ReservationDto
     {
-        [Required]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [Required]
         public int Cabin { get; set; }
@@ -20,13 +19,13 @@ namespace Reservation_API.Dtos
         [Required]
         public DateTime Departure { get; set; }
 
-        [Required]
-        public string GuestId { get; set; } = null!;
+        public string GuestNumber { get; set; } = null!;
 
         [Required]
         public int PaymentAmount { get; set; }
 
-        [Required]
         public PaymentType PaymentType { get; set; }
+
+        public string? Promocode { get; set; }
     }
 }

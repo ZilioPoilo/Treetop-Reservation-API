@@ -5,7 +5,7 @@ using Reservation_API.Models;
 
 namespace Reservation_API.Dtos
 {
-    public class CreateReservationDto
+    public class ValidateReservationDto
     {
         [Required]
         public DateTime Arrive { get; set; }
@@ -13,13 +13,5 @@ namespace Reservation_API.Dtos
         [Required]
         public DateTime Departure { get; set; }
 
-        [Required]
-        public string GuestId { get; set; } = null!;
-
-        [Required]
-        public int PaymentAmount { get; set; }
-
-        [Required]
-        public PaymentType PaymentType { get; set; }
     }
 }
