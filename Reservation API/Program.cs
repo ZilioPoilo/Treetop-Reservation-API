@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.OpenApi.Models;
 using Reservation_API.AppMapping;
 using Reservation_API.Services;
@@ -39,6 +40,25 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
     });
 });
+
+builder.Services.AddMassTransit(options =>
+{
+    options.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("reservation-api", false));
+
+    options.UsingRabbitMq((context, config) =>
+    {
+        var host = builder.Configuration.GetSection("RabbitMq:Host").Get<string>();
+
+        config.Host(host, h =>
+        {
+            h.Username(builder.Configuration.GetSection("RabbitMq:Username").Get<string>());
+            h.Password(builder.Configuration.GetSection("RabbitMq:Password").Get<string>());
+        });
+
+        config.ConfigureEndpoints(context);
+    });
+});
+
 
 builder.Services.AddSingleton<MongoDbConnectionService>();
 builder.Services.AddSingleton<ReservationService>();

@@ -1,9 +1,13 @@
-﻿using AutoMapper;
+﻿using Amazon.Runtime;
+using AutoMapper;
+using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using Reservation_API.AppMapping;
 using Reservation_API.Dtos;
+using Reservation_API.MassTransit.Events;
+using Reservation_API.MassTransit.Responses;
 using Reservation_API.Models;
 using Reservation_API.Services.DataServices;
 
@@ -15,13 +19,15 @@ namespace Reservation_API.Controllers
     {
         private static Serilog.ILogger Logger => Serilog.Log.ForContext<ReservationController>();
 
-        public readonly ReservationService _service;
-        public readonly IMapper _mapper;
-
-        public ReservationController(IMapper mapper, ReservationService service)
+        private readonly ReservationService _service;
+        private readonly IMapper _mapper;
+        private readonly IRequestClient<GetPriceEvent> _clientGetPrice;
+            
+        public ReservationController(IMapper mapper, ReservationService service, IRequestClient<GetPriceEvent> clientGetPrice)
         {
             _service = service;
             _mapper = mapper;
+            _clientGetPrice = clientGetPrice;
         }
 
         [HttpPost]
@@ -107,10 +113,19 @@ namespace Reservation_API.Controllers
             //Создать цикл по кевинам 
             //Выбрать все бронирование где reservation.cabin == cabin.id
             //отсортировать чтобы reservation.arrive <= dto.Departure && reservation.arrive >= DateTime.Now.Date
+
+            //Get price from Cabin API GetPrice(departure)
+
+            GetPriceEvent getPriceEvent = new GetPriceEvent()
+            {
+                Departure = dto.Departure,
+            };
+
+            var response = await _clientGetPrice.GetResponse<GetPriceResponse>(getPriceEvent);
             ReservationDto result = _mapper.Map<ReservationDto>(dto);
             result.Status = Status.Validating;
             result.Cabin = 1;
-            result.PaymentAmount = 1000;
+            result.PaymentAmount = response.Message.Price;
             return StatusCode(200, result);
         }
 
