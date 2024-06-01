@@ -1,5 +1,7 @@
 ﻿using Amazon.Runtime;
 using AutoMapper;
+using Cabin_API.MassTransit.Events;
+using Cabin_API.MassTransit.Responses;
 using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,12 +24,19 @@ namespace Reservation_API.Controllers
         private readonly ReservationService _service;
         private readonly IMapper _mapper;
         private readonly IRequestClient<GetPriceEvent> _clientGetPrice;
+        private readonly IRequestClient<GetCabinsCountEvent> _clientGetCabinsCount;
             
-        public ReservationController(IMapper mapper, ReservationService service, IRequestClient<GetPriceEvent> clientGetPrice)
+        public ReservationController(
+            IMapper mapper, 
+            ReservationService service, 
+            IRequestClient<GetPriceEvent> clientGetPrice,
+            IRequestClient<GetCabinsCountEvent> clientGetCabinsCount
+            )
         {
             _service = service;
             _mapper = mapper;
             _clientGetPrice = clientGetPrice;
+            _clientGetCabinsCount = clientGetCabinsCount;
         }
 
         [HttpPost]
@@ -78,7 +87,8 @@ namespace Reservation_API.Controllers
         {
             List<Reservation> reservations = _mapper.Map<List<Reservation>>(await _service.GetReservedAsync());
 
-            int totalCabins = 3;
+            GetCabinsCountEvent getCabinsCountEvent = new GetCabinsCountEvent();
+            var responseCabins = await _clientGetCabinsCount.GetResponse<GetCabinsCountResponse>(getCabinsCountEvent);
 
             Dictionary<DateTime, int> occupiedDays = new Dictionary<DateTime, int>();
 
@@ -98,7 +108,7 @@ namespace Reservation_API.Controllers
             }
 
             List<DateTime> fullyOccupiedDays = occupiedDays
-                .Where(d => d.Value == totalCabins)
+                .Where(d => d.Value == responseCabins.Message.Count)
                 .Select(d => d.Key)
                 .ToList();
 
@@ -108,24 +118,40 @@ namespace Reservation_API.Controllers
         [HttpPost("validate")]
         public async Task<IActionResult> Validate([FromBody] ValidateReservationDto dto)
         {
-            //Validating
-            //Get cabins from Cabin API
-            //Создать цикл по кевинам 
-            //Выбрать все бронирование где reservation.cabin == cabin.id
-            //отсортировать чтобы reservation.arrive <= dto.Departure && reservation.arrive >= DateTime.Now.Date
+            GetCabinsCountEvent getCabinsCountEvent = new GetCabinsCountEvent();
+            var responseCabins = await _clientGetCabinsCount.GetResponse<GetCabinsCountResponse>(getCabinsCountEvent);
 
-            //Get price from Cabin API GetPrice(departure)
+            int cabin = 0;
+            for (int i = 1; i <= responseCabins.Message.Count; i++)
+            {
+                List<Reservation> list = await _service.GetForValidate(dto.Departure.Date.AddHours(11), dto.Arrive.Date.AddHours(14), i);
+                if (list.Count == 0)
+                {
+                    cabin = i;
+                    break;
+                }
+                if (i == responseCabins.Message.Count && list.Count != 0)
+                    return StatusCode(404, new ErrorDto("No rooms available"));
+            }
 
+            ReservationDto result = _mapper.Map<ReservationDto>(dto);
+            result.Status = Status.Validated;
+            result.Cabin = cabin;
+
+            //Get Price
             GetPriceEvent getPriceEvent = new GetPriceEvent()
             {
                 Departure = dto.Departure,
             };
 
-            var response = await _clientGetPrice.GetResponse<GetPriceResponse>(getPriceEvent);
-            ReservationDto result = _mapper.Map<ReservationDto>(dto);
-            result.Status = Status.Validating;
-            result.Cabin = 1;
-            result.PaymentAmount = response.Message.Price;
+            var responsePrice = await _clientGetPrice.GetResponse<GetPriceResponse>(getPriceEvent);
+
+            //Calculate difference between days
+            TimeSpan difference = dto.Departure.Subtract(dto.Arrive);
+            int daysDifference = (int)difference.TotalDays;
+
+            //multiply price on days
+            result.PaymentAmount = responsePrice.Message.Price * daysDifference;
             return StatusCode(200, result);
         }
 

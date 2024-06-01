@@ -56,5 +56,17 @@ namespace Reservation_API.Services.DataServices
 
             return model;
         }
+
+        public async Task<List<Reservation>> GetForValidate(DateTime departure, DateTime arrive, int id)
+        {
+            var departureFilter = Builders<Reservation>.Filter.Gt(r => r.Departure, arrive.Date.AddHours(14));
+            var arriveFilter = Builders<Reservation>.Filter.Lt(r => r.Arrive, departure);
+            var statusFilter = Builders<Reservation>.Filter.In(r => r.Status, new[] { Status.AwaitingConfirmation, Status.Reserved });
+            var idFilter = Builders<Reservation>.Filter.Eq(r => r.Cabin, id);
+            var combinedFilter = Builders<Reservation>.Filter.And(departureFilter, arriveFilter, statusFilter, idFilter);
+
+            List<Reservation> reservations = await _collection.Find(combinedFilter).ToListAsync();
+            return reservations;
+        }
     }
 }

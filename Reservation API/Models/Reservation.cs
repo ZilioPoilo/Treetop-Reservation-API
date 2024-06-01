@@ -4,7 +4,7 @@ namespace Reservation_API.Models
 {
     public enum Status
     {
-        Validating = 0,
+        Validated = 0,
 
         Completed = 1,
 
@@ -54,6 +54,8 @@ namespace Reservation_API.Models
         {
             Id = Guid.NewGuid().ToString();
             Status = Status.AwaitingConfirmation;
+            Arrive = Arrive.Date.AddHours(14);
+            Departure = Departure.Date.AddHours(11);
         }
 
     }
