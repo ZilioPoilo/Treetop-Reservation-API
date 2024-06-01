@@ -51,6 +51,16 @@ namespace Reservation_API.Controllers
             return StatusCode(200, result);
         }
 
+        [HttpPost("id")]
+        public async Task<IActionResult> GetById([FromBody] string id)
+        {
+            Reservation result = await _service.GetByIdAsync(id);
+            if (result == null)
+                return StatusCode(404, new ErrorDto("Reservation not found"));
+
+            return StatusCode(200, result);
+        }
+
         [HttpDelete("id")]
         public async Task<IActionResult> DeleteById([FromBody] string id)
         {

@@ -28,6 +28,13 @@ namespace Reservation_API.Services.DataServices
             return reservations;
         }
 
+        public async Task<Reservation> GetByIdAsync(string id)
+        {
+            var filter = Builders<Reservation>.Filter.Eq(r => r.Id, id);
+            Reservation result = await _collection.Find(filter).FirstOrDefaultAsync();
+            return result;
+        }
+
         public async Task<List<Reservation>> GetReservedAsync()
         { 
             DateTime date = DateTime.Now.Date.AddDays(1);
