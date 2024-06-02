@@ -17,7 +17,6 @@ namespace Reservation_API.Services.DataServices
         public async Task<Reservation> CreateAsync(Reservation model)
         {
             await _collection.InsertOneAsync(model);
-
             return model;
         }
 

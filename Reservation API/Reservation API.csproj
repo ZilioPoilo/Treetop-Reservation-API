@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="MassTransit\Consumers\" />
+    <Folder Include="MassTransit\Responses\Promocode\" />
   </ItemGroup>
 
 </Project>

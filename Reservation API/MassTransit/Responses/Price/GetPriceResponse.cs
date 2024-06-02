@@ -1,7 +1,7 @@
 ﻿using MassTransit;
 using System.ComponentModel.DataAnnotations;
 
-namespace Reservation_API.MassTransit.Responses
+namespace Reservation_API.MassTransit.Responses.Price
 {
     [MessageUrn("GetPriceResponse")]
     public class GetPriceResponse

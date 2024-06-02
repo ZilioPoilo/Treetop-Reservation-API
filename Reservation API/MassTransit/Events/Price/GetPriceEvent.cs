@@ -1,7 +1,7 @@
 ﻿using MassTransit;
 using System.ComponentModel.DataAnnotations;
 
-namespace Reservation_API.MassTransit.Events
+namespace Reservation_API.MassTransit.Events.Price
 {
     [EntityName("reservation-api-get-price")]
     [MessageUrn("GetPriceEvent")]

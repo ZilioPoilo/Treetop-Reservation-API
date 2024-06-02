@@ -1,15 +1,16 @@
 ﻿using Amazon.Runtime;
 using AutoMapper;
-using Cabin_API.MassTransit.Events;
-using Cabin_API.MassTransit.Responses;
 using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using Reservation_API.AppMapping;
 using Reservation_API.Dtos;
-using Reservation_API.MassTransit.Events;
-using Reservation_API.MassTransit.Responses;
+using Reservation_API.MassTransit.Events.Cabin;
+using Reservation_API.MassTransit.Events.Price;
+using Reservation_API.MassTransit.Events.Promocode;
+using Reservation_API.MassTransit.Responses.Cabin;
+using Reservation_API.MassTransit.Responses.Price;
 using Reservation_API.Models;
 using Reservation_API.Services.DataServices;
 
@@ -25,18 +26,21 @@ namespace Reservation_API.Controllers
         private readonly IMapper _mapper;
         private readonly IRequestClient<GetPriceEvent> _clientGetPrice;
         private readonly IRequestClient<GetCabinsCountEvent> _clientGetCabinsCount;
+        private readonly IPublishEndpoint _clientPutPromocode;
             
         public ReservationController(
             IMapper mapper, 
             ReservationService service, 
             IRequestClient<GetPriceEvent> clientGetPrice,
-            IRequestClient<GetCabinsCountEvent> clientGetCabinsCount
+            IRequestClient<GetCabinsCountEvent> clientGetCabinsCount,
+            IPublishEndpoint clientPutPromocode
             )
         {
             _service = service;
             _mapper = mapper;
             _clientGetPrice = clientGetPrice;
             _clientGetCabinsCount = clientGetCabinsCount;
+            _clientPutPromocode = clientPutPromocode;
         }
 
         [HttpPost]
@@ -44,15 +48,18 @@ namespace Reservation_API.Controllers
         {
             Reservation model = _mapper.Map<Reservation>(dto);
             model.UpdateReservation();
-            model = await _service.CreateAsync(model);
-            if (model == null)
-                return StatusCode(500, "Server error");
+            if (model.Promocode != null)
+            {
+                await _clientPutPromocode.Publish(new PutPromocodeUsesEvent() { Code = model.Promocode });
+            }
+            await _service.CreateAsync(model);
+
             ReservationDto result = _mapper.Map<ReservationDto>(model);
             return StatusCode(200, result);
         }
 
-        [HttpPost("id")]
-        public async Task<IActionResult> GetById([FromBody] string id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromRoute] string id)
         {
             Reservation result = await _service.GetByIdAsync(id);
             if (result == null)
@@ -97,8 +104,7 @@ namespace Reservation_API.Controllers
         {
             List<Reservation> reservations = _mapper.Map<List<Reservation>>(await _service.GetReservedAsync());
 
-            GetCabinsCountEvent getCabinsCountEvent = new GetCabinsCountEvent();
-            var responseCabins = await _clientGetCabinsCount.GetResponse<GetCabinsCountResponse>(getCabinsCountEvent);
+            var responseCabins = await _clientGetCabinsCount.GetResponse<GetCabinsCountResponse>(new GetCabinsCountEvent());
 
             Dictionary<DateTime, int> occupiedDays = new Dictionary<DateTime, int>();
 
@@ -128,8 +134,7 @@ namespace Reservation_API.Controllers
         [HttpPost("validate")]
         public async Task<IActionResult> Validate([FromBody] ValidateReservationDto dto)
         {
-            GetCabinsCountEvent getCabinsCountEvent = new GetCabinsCountEvent();
-            var responseCabins = await _clientGetCabinsCount.GetResponse<GetCabinsCountResponse>(getCabinsCountEvent);
+            var responseCabins = await _clientGetCabinsCount.GetResponse<GetCabinsCountResponse>(new GetCabinsCountEvent());
 
             int cabin = 0;
             for (int i = 1; i <= responseCabins.Message.Count; i++)
