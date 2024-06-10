@@ -1,6 +1,7 @@
 ﻿using Amazon.Runtime;
 using AutoMapper;
 using MassTransit;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
@@ -69,6 +70,7 @@ namespace Reservation_API.Controllers
         }
 
         [HttpDelete("id")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteById([FromBody] string id)
         {
             DeleteResult result = await _service.DeleteByIdAsync(id);
@@ -79,6 +81,7 @@ namespace Reservation_API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "User,Admin")]
         public async Task<IActionResult> Update([FromBody] ReservationDto reservationDto)
         {
             Reservation result = await _service.PutAsync(_mapper.Map<Reservation>(reservationDto));
@@ -89,6 +92,7 @@ namespace Reservation_API.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             List<Reservation> model = await _service.GetAllAsync();
